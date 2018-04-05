@@ -20,4 +20,4 @@ Clone the repository. Before running any of the files, download the data with `p
 
 ## Other sources of information
 
-A master's thesis that uses the same data as a validation for new road network analysis techniques can be [here](https://dspace.library.uu.nl/bitstream/handle/1874/334224/Thesis%20-%20Johan%20Meppelink%20-%202016-05-17.pdf?sequence=2) (pdf)
+A master's thesis that uses the same data as a validation for new road network analysis techniques can be downloaded [here](https://dspace.library.uu.nl/bitstream/handle/1874/334224/Thesis%20-%20Johan%20Meppelink%20-%202016-05-17.pdf?sequence=2) (pdf)
