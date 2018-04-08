@@ -13,6 +13,10 @@ But who is to say it will not solve traffic jams in a few weeks?
  * Python3
  * pandas
  * numpy
+ * Bokeh (only for plotting)
+
+Additionally, for plotting the data on a Google Maps map, request a Google API key [here](https://developers.google.com/maps/documentation/javascript/get-api-key
+#) and put it in `api.py`.
 
 ### Instructions
 

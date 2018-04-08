@@ -1,4 +1,7 @@
 data
+api.py
+*.html
 .idea
 .ipynb_checkpoints/
+__pycache__/
 ~*
