@@ -49,7 +49,7 @@ def parse_to_dataframe():
     locations = {'id': ids, 'names': names, 'latitude': latitudes, 'longitude': longitudes, 'length': lengths}
     df_loc = pd.DataFrame.from_dict(locations)
     df_loc.head()
-    joined = pd.merge(df_loc, df, on='id', how='inner')
+    joined = pd.merge(df_loc, df, on='id', how='left')
     return joined
 
 
