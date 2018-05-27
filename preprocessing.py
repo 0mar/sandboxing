@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 import pandas as pd
 import numpy as np
 
