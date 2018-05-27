@@ -32,18 +32,18 @@ def download(url, file_name, overwrite):
         else:
             print("%s exists, not overwriting" % file_name)
             return
-    print("Downloading from %s" % url)
-    urllib.request.urlretrieve(url, file_name + ext)
-    print("Unpacking in %s" % file_name)
-    if url.endswith('.zip'):
-        zip_ref = zipfile.ZipFile(file_name + ext, 'r')
-        zip_ref.extractall('data')
-        zip_ref.close()
-    elif url.endswith('.gz'):
-        with gzip.open(file_name + ext, "rb") as f_in:
-            with open(file_name, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-    os.remove(file_name + ext)
+        print("Downloading from %s" % url)
+        urllib.request.urlretrieve(url, file_name + ext)
+        print("Unpacking in %s" % file_name)
+        if url.endswith('.zip'):
+            zip_ref = zipfile.ZipFile(file_name + ext, 'r')
+            zip_ref.extractall('data')
+            zip_ref.close()
+        elif url.endswith('.gz'):
+            with gzip.open(file_name + ext, "rb") as f_in:
+                with open(file_name, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        os.remove(file_name + ext)
 
 
 if __name__ == "__main__":
