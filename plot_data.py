@@ -8,13 +8,14 @@ from bokeh.models.mappers import ColorMapper, LinearColorMapper
 # from bokeh.palettes import Viridis5
 import pandas as pd
 from preprocessing import parse_to_dataframe
+from filter_data import filter_df_on_locations
 try:
     from api import API_KEY
 except ImportError:
     raise FileNotFoundError("No API key found. Create one at https://developers.google.com/maps/documentation/javascript/get-api-key and save the line `API_KEY='your key'` in api.py")
     
-df = parse_to_dataframe()
-
+full_df = parse_to_dataframe()
+df = filter_df_on_locations(full_df,"Tilburg", "Eindhoven")
 map_options = GMapOptions(lat=52.0687206, lng=4.9863232, map_type="roadmap", zoom=7)
 plot = GMapPlot(x_range=Range1d(),y_range=Range1d(),map_options=map_options)
 plot.title.text = "Test plot"
