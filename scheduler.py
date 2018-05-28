@@ -9,6 +9,7 @@ from filter_data import filter_df_on_locations
 scheduler = sched.scheduler(time.time, time.sleep)
 
 #initialize global dataframe
+os.system("python download_data.py")
 df = filter_df_on_locations(parse_to_dataframe(),"Tilburg", "Eindhoven")
 print(df.shape)
 
@@ -23,7 +24,7 @@ def get_data(name):
 	
     print(df.shape)
 	
-for x in range(0, 10):
+for x in range(0, 60):
     df1 = scheduler.enter(60 * x, 1, get_data, (x,))
 
 print("Script started at ", time.time())
