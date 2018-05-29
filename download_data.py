@@ -10,9 +10,11 @@ import os
 
 travel_time_url = "http://opendata.ndw.nu/traveltime.xml.gz"
 measuring_locations_url = "http://www.ndw.nu/downloaddocument/4ceb5142ed9e79bad0db5382736c474a/MST.zip"
+traffic_speed_url = "http://opendata.ndw.nu/trafficspeed.xml.gz"
 
 travel_time_file = "data/traveltime.xml"
 measuring_locations_file = "data/measuring_locations.xml"
+traffic_speed_file = "data/trafficspeed.xml"
 
 
 def download(url, file_name, overwrite):
@@ -32,20 +34,23 @@ def download(url, file_name, overwrite):
         else:
             print("%s exists, not overwriting" % file_name)
             return
-        print("Downloading from %s" % url)
-        urllib.request.urlretrieve(url, file_name + ext)
-        print("Unpacking in %s" % file_name)
-        if url.endswith('.zip'):
-            zip_ref = zipfile.ZipFile(file_name + ext, 'r')
-            zip_ref.extractall('data')
-            zip_ref.close()
-        elif url.endswith('.gz'):
-            with gzip.open(file_name + ext, "rb") as f_in:
-                with open(file_name, "wb") as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-        os.remove(file_name + ext)
+    print("Downloading from %s" % url)
+    urllib.request.urlretrieve(url, file_name + ext)
+    print("Unpacking in %s" % file_name)
+    if url.endswith('.zip'):
+        zip_ref = zipfile.ZipFile(file_name + ext, 'r')
+        zip_file = zip_ref.namelist()[0]
+        extracted_file = zip_ref.extract(zip_file)
+        os.rename(extracted_file, file_name)
+        zip_ref.close()
+    elif url.endswith('.gz'):
+        with gzip.open(file_name + ext, "rb") as f_in:
+            with open(file_name, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+    os.remove(file_name + ext)
 
 
 if __name__ == "__main__":
     download(travel_time_url, travel_time_file, overwrite=True)
+    download(traffic_speed_url, traffic_speed_file, overwrite=True)
     download(measuring_locations_url, measuring_locations_file, overwrite=False)
