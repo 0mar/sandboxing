@@ -3,50 +3,108 @@ import lxml.etree as ET
 import pandas as pd
 import numpy as np
 
-times_file = 'data/traveltime.xml'
-locations_file = 'data/201411281300_MST_NDW01_MT_662.xml'
-speed_file = 'data/trafficspeed.xml'
+times_file = "data/traveltime.xml"
+locations_file = "data/measuring_locations.xml"
+speed_file = "data/trafficspeed.xml"
+prefix = ".//{http://datex2.eu/schema/2/2_0}"
+
+
+def parse_travel_times():
+    """
+    Parses the travel times from the indicated XML file
+
+    :return: DataFrame with IDs and measurements
+    """
+    tree = ET.parse(times_file)
+    data = {"id": [], "timestamp": [], "duration": []}
+    entries = tree.getroot().findall(prefix + "siteMeasurements")
+    for entry in entries:
+        data["id"].append(entry.find(prefix + "measurementSiteReference").attrib["id"])
+        data["timestamp"].append(entry.find(prefix + "measurementTimeDefault").text)
+        data["duration"].append(entry.find(prefix + "duration").text)
+    df = pd.DataFrame.from_dict(data)
+    return df
+
+
+def parse_measuring_locations():
+    """
+    Parses measuring locations from the indicated XML file
+
+    :return: DataFrame with IDs and locations.
+    """
+    tree = ET.parse(locations_file)
+    data = {"id": [], "names": [], "latitude": [], "longitude": [], "length": []}
+    entries = tree.getroot().findall(prefix + "measurementSiteRecord")
+    for entry in entries:
+        data["id"].append(entry.attrib["id"])
+        name = entry.find(prefix + "measurementSiteName")
+        data["names"].append(name.find(prefix + "value").text)
+        data["latitude"].append(entry.find(prefix + "latitude").text)
+        data["longitude"].append(entry.find(prefix + "longitude").text)
+        length_element = entry.find(prefix + "lengthAffected")
+        if length_element is not None:
+            data["length"].append(int(float(length_element.text)))
+        else:
+            data["length"].append(0)
+
+    df = pd.DataFrame.from_dict(data)
+    return df
+
+
+def parse_traffic_speeds():
+    """
+    Parses traffic speeds from the indicated XML file.
+    Averages the measured speeds and stores them.
+    The number of lanes(?) varies for every measuring point.
+    To obtain the number of cars, we do the following:
+    First we find the total number of measurements, then we take every 4 car count and sum those up.
+    To obtain the average speed, we take every 4th speed record and compute a weighted average.
+    We could also get the standard deviation, should we be so inclined.
+    Don't think we are, though.
+
+    :return: DataFrame with IDs, counting results and speeds
+    """
+    tree = ET.parse(speed_file)
+    data = {"id": [], "amount": [], "speed": []}
+    entries = tree.getroot().findall(prefix + "siteMeasurements")
+    for entry in entries:
+        data["id"].append(entry.find(prefix + "measurementSiteReference").attrib['id'])
+        measurements = entry.findall(prefix + 'averageVehicleSpeed')
+        assert len(measurements) % 4 == 0  # Checking if this is always true
+        counts = np.zeros(len(measurements) // 4, dtype=int)
+        speeds = np.zeros(len(measurements) // 4)
+        for lane in range(len(measurements) // 4):
+            index = lane * 4 + 3
+            speeds[lane] += int(measurements[index].find(prefix + 'speed').text)
+            counts[lane] += np.maximum(int(measurements[index].attrib["numberOfInputValuesUsed"]), 0)
+        data["amount"].append(np.average(counts))
+        print("Counts", np.average(counts))
+
+        if sum(counts) > 0:
+            data["speed"].append(np.average(speeds, weights=counts))
+            print("Speed", np.average(speeds, weights=counts))
+        else:
+            data["speed"].append(0)
+
+        print("from data", speeds, counts)
+    df = pd.DataFrame.from_dict(entries)
+    return df
 
 
 def parse_to_dataframe():
-    schema = ".//{http://datex2.eu/schema/2/2_0}"
-    traveltimes_tree = ET.parse(times_file)
-    locations_tree = ET.parse(locations_file)
-    trafficspeeds_tree = ET.parse(speed_file)
+    """
+    Parses three files and combines them to a data frame.
 
-    data = {"id": [], "timestamp": [], "duration": []}
-    measurements = traveltimes_tree.getroot().findall(schema+"siteMeasurements")
-    locations = locations_tree.getroot().findall(schema+"measurementSiteRecord")
-
-    for m in measurements:
-        data["id"].append(m.find(schema+"measurementSiteReference").attrib["id"])
-        data["timestamp"].append(m.find(schema+"measurementTimeDefault").text)
-        data["duration"].append(m.find(schema+"duration").text)
-
-    df = pd.DataFrame.from_dict(data)
-
-    ids = {}
-    names = {}
-    latitudes = {}
-    longitudes = {}
-    lengths = {}
-
-    for i in range(len(locations)):
-        ids[i] = locations[i].attrib["id"]
-        naam = locations[i].find(schema+"measurementSiteName")
-        names[i] = naam.find(schema+"value").text
-        latitudes[i] = locations[i].find(schema+"latitude").text
-        longitudes[i] = locations[i].find(schema+"longitude").text
-        if len(locations[i].findall(schema+ "lengthAffected")) > 0:
-            lengths[i] = int(locations[i].find("%slengthAffected").text)
-        else:
-            lengths[i] = 0
-
-    locations = {'id': ids, 'names': names, 'latitude': latitudes, 'longitude': longitudes, 'length': lengths}
-    df_loc = pd.DataFrame.from_dict(locations)
-    joined = pd.merge(df_loc, df, on='id', how='left')
-    return joined
+    :return: Data frame containing traffic information per ID
+    """
+    locations = parse_measuring_locations()
+    traveltimes = parse_travel_times()
+    trafficspeeds = parse_traffic_speeds()
+    df = pd.merge(locations, traveltimes, on="id", how="left")
+    df = pd.merge(df, trafficspeeds, on="id", how="left")
+    return df
 
 
-if __name__ == '__main__':
-    df = parse_to_dataframe()
+if __name__ == "__main__":
+    demo_df = parse_to_dataframe()
+    print(demo_df)
