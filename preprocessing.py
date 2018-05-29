@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 import pandas as pd
 import numpy as np
 
 times_file = 'data/traveltime.xml'
 locations_file = 'data/201411281300_MST_NDW01_MT_662.xml'
+speed_file = 'data/trafficspeed.xml'
 
 
 def parse_to_dataframe():
-    treeTimes = ET.parse(times_file)
-    treeLocations = ET.parse(locations_file)
-    root = treeTimes.getroot()
-    rootLocations = treeLocations.getroot()
+    schema = ".//{http://datex2.eu/schema/2/2_0}"
+    traveltimes_tree = ET.parse(times_file)
+    locations_tree = ET.parse(locations_file)
+    trafficspeeds_tree = ET.parse(speed_file)
 
-    ids = {}
-    times = {}
-    durations = {}
-    measurements = root.findall(".//{http://datex2.eu/schema/2/2_0}siteMeasurements")
+    data = {"id": [], "timestamp": [], "duration": []}
+    measurements = traveltimes_tree.getroot().findall(schema+"siteMeasurements")
+    locations = locations_tree.getroot().findall(schema+"measurementSiteRecord")
 
-    for i in range(len(measurements)):
-        ids[i] = measurements[i].findall(".//{http://datex2.eu/schema/2/2_0}measurementSiteReference")[0].attrib["id"]
-        times[i] = measurements[i].findall(".//{http://datex2.eu/schema/2/2_0}measurementTimeDefault")[0].text
-        durations[i] = measurements[i].findall(".//{http://datex2.eu/schema/2/2_0}duration")[0].text
+    for m in measurements:
+        data["id"].append(m.find(schema+"measurementSiteReference").attrib["id"])
+        data["timestamp"].append(m.find(schema+"measurementTimeDefault").text)
+        data["duration"].append(m.find(schema+"duration").text)
 
-    data = {'id': ids, 'timestamp': times, 'duration': durations}
     df = pd.DataFrame.from_dict(data)
-    df.head()
-
-    locations = rootLocations.findall(".//{http://datex2.eu/schema/2/2_0}measurementSiteRecord")
 
     ids = {}
     names = {}
@@ -35,20 +31,19 @@ def parse_to_dataframe():
     longitudes = {}
     lengths = {}
 
-    for i in range(0, len(measurements)):
+    for i in range(len(locations)):
         ids[i] = locations[i].attrib["id"]
-        naam = locations[i].findall(".//{http://datex2.eu/schema/2/2_0}measurementSiteName")[0]
-        names[i] = naam.findall(".//{http://datex2.eu/schema/2/2_0}value")[0].text
-        latitudes[i] = locations[i].findall(".//{http://datex2.eu/schema/2/2_0}latitude")[0].text
-        longitudes[i] = locations[i].findall(".//{http://datex2.eu/schema/2/2_0}longitude")[0].text
-        if len(locations[i].findall(".//{http://datex2.eu/schema/2/2_0}lengthAffected")) > 0:
-            lengths[i] = int(locations[i].findall(".//{http://datex2.eu/schema/2/2_0}lengthAffected")[0].text)
+        naam = locations[i].find(schema+"measurementSiteName")
+        names[i] = naam.find(schema+"value").text
+        latitudes[i] = locations[i].find(schema+"latitude").text
+        longitudes[i] = locations[i].find(schema+"longitude").text
+        if len(locations[i].findall(schema+ "lengthAffected")) > 0:
+            lengths[i] = int(locations[i].find("%slengthAffected").text)
         else:
             lengths[i] = 0
 
     locations = {'id': ids, 'names': names, 'latitude': latitudes, 'longitude': longitudes, 'length': lengths}
     df_loc = pd.DataFrame.from_dict(locations)
-    df_loc.head()
     joined = pd.merge(df_loc, df, on='id', how='left')
     return joined
 
