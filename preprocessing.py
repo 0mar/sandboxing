@@ -71,6 +71,8 @@ def parse_traffic_speeds():
         data["id"].append(entry.find(prefix + "measurementSiteReference").attrib['id'])
         measurements = entry.findall(prefix + 'averageVehicleSpeed')
         assert len(measurements) % 4 == 0  # Checking if this is always true
+        if len(measurements)==0:
+            print("No measurements found")
         counts = np.zeros(len(measurements) // 4, dtype=int)
         speeds = np.zeros(len(measurements) // 4)
         for lane in range(len(measurements) // 4):
@@ -99,9 +101,9 @@ def parse_to_dataframe():
     """
     locations = parse_measuring_locations()
     traveltimes = parse_travel_times()
-    trafficspeeds = parse_traffic_speeds()
+    # trafficspeeds = parse_traffic_speeds()
     df = pd.merge(locations, traveltimes, on="id", how="left")
-    df = pd.merge(df, trafficspeeds, on="id", how="left")
+    # df = pd.merge(df, trafficspeeds, on="id", how="left")
     return df
 
 
