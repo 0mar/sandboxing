@@ -50,7 +50,11 @@ def download(url, file_name, overwrite):
     os.remove(file_name + ext)
 
 
-if __name__ == "__main__":
+def download_all():
     download(travel_time_url, travel_time_file, overwrite=True)
     download(traffic_speed_url, traffic_speed_file, overwrite=True)
     download(measuring_locations_url, measuring_locations_file, overwrite=False)
+
+
+if __name__ == "__main__":
+    download_all()
