@@ -1,9 +1,14 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 import seaborn as sns; sns.set()
 
-df_data = pd.read_pickle('data\small_set\small_set.pkl')
+if os.name=='posix':
+    df_data = pd.read_pickle('data/small_set.xz')
+else:
+    df_data = pd.read_pickle('data\small_set\small_set.pkl')
+
 
 #Keep measurement locations that were active by removing NaNs
 #And sort to group measurement locations and order by timestamp
